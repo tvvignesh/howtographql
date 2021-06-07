@@ -1,7 +1,7 @@
+import { $v } from 'graphcool-styles';
 import * as React from 'react';
 import Bubble from './Bubble';
 import Company from './Company';
-import { $v } from 'graphcool-styles';
 
 export default function Team() {
   return (
@@ -266,6 +266,13 @@ export default function Team() {
                 description={'graphql-go'}
                 x={-670}
                 y={80}
+              />
+              <Bubble
+                avatar={require('../../assets/graphics/contributors/vignesh.jpg')}
+                name="Vignesh T.V"
+                description={'graphql-ts'}
+                x={170}
+                y={-10}
               />
             </div>
           </div>

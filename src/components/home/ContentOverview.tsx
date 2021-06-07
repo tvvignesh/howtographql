@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Step } from '../../types'
 import {
   getBackendTutorials,
-  getFrontendTutorials,
+  getFrontendTutorials
 } from '../../utils/tutorials'
 import Stack from '../Steps/Stack'
 
@@ -94,8 +94,13 @@ export default function ContentOverview({ location, steps }: Props) {
                 location={location}
               />
               <Stack
-                name="NodeJS"
+                name="NodeJS / Javascript"
                 steps={steps['graphql-js']}
+                location={location}
+              />
+              <Stack
+                name="NodeJS / Typescript"
+                steps={steps['graphql-ts']}
                 location={location}
               />
               <div className="all-tutorials">

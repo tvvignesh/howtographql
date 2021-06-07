@@ -29,6 +29,7 @@ The content for all tutorials is located in the  [`/content`](https://github.com
 
 - Prisma
 - graphql-js / JavaScript
+- graphql-ts / Typescript
 - Absinthe / Elixir
 - graphql-ruby / Ruby
 - graphql-java / Java

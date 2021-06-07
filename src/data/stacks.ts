@@ -143,6 +143,22 @@ const data: Stack[] = [
     beginnersChoice: true,
   },
   {
+    title: 'graphql-ts',
+    type: 'backend',
+    key: 'graphql-ts',
+    images: [
+      require('../assets/icons/nodejs.svg'),
+      require('../assets/icons/graphql.svg'),
+    ],
+    content: {
+      title: 'graphql.js',
+      description:
+        'Build your own GraphQL server with Node.js, Typescript, Fastify, graphql-helix, Envelop and Prisma',
+    },
+    authorName: 'Vignesh T.V.',
+    beginnersChoice: true,
+  },
+  {
     title: 'graphql-elixir',
     type: 'backend',
     key: 'graphql-elixir',
