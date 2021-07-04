@@ -45,10 +45,11 @@ Speaking of being productive and building awesome stuff, let's jump back in and 
 
 <Instruction>
 
-First, let's install the Prisma CLI by running the following command in your terminal:
+First, let's install the Prisma CLI and Prisma Client by running the following command in your terminal:
 
 ```bash(path=".../hackernews-node/")
 npm install prisma --save-dev
+npm install @prisma/client
 ```
 
 </Instruction>
@@ -66,7 +67,7 @@ npx prisma init
 </Instruction>
 
 Remember the GraphQL schema that you've been working with until now? Well, Prisma has a schema, too! Inside the `prisma` directory that was created in the last step, you'll see a
-file called `schema.prisma`. You can think of the `prisma.schema` file as a _database schema_. It has three components:
+file called `schema.prisma`. You can think of the `schema.prisma` file as a _database schema_. It has three components:
 
 1. **Data source**: Specifies your database connection.
 1. **Generator**: Indicates that you want to generate Prisma Client.
