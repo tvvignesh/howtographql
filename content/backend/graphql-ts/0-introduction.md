@@ -1,8 +1,8 @@
 ---
 title: Introduction
-pageTitle: 'Building a GraphQL Server with Node.js, Fastify, Typescript, GraphQL Helix, Envelop & Prisma'
+pageTitle: 'Building a GraphQL Server with graphql-ez using Node.js, Fastify, Typescript, GraphQL Helix, Envelop & Prisma'
 description:
-  'Learn how to build a GraphQL server with Fastify, graphql-helix, Node.js, Typescript, Envelop & Prisma'
+  'Learn how to build a GraphQL server with graphql-ez, Fastify, graphql-helix, Node.js, Typescript, Envelop & Prisma'
 question: What is GraphiQL?
 answers:
   [
@@ -16,7 +16,7 @@ correctAnswer: 0
 
 ### Overview
 
-**This tutorial is heavily inspired and derived from the [graphql-node tutorial by Robin MacPherson](https://www.howtographql.com/graphql-js/0-introduction/). We have modified the same tutorial to work with Fastify, Typescript, GraphQL Helix, Envelop & Prisma.**
+**This tutorial is heavily inspired from the [graphql-node tutorial by Robin MacPherson](https://www.howtographql.com/graphql-js/0-introduction/). We have modified the same tutorial to work with Fastify, Typescript, GraphQL Helix, Envelop & Prisma.**
 
 The GraphQL specification was open sourced in 2015 by Facebook along with some basic implementations with a completely unique approach on how to structure, consume, transmit and process data and data graphs.
 
@@ -27,6 +27,7 @@ GraphQL does not make REST or any other channel of communication obsolete. It al
 In this tutorial, we'll learn how to build a GraphQL server entirely from scratch. This is the stack we will be working with:
 
 - [Typescript](https://www.typescriptlang.org/): Typed JavaScript at Any Scale.
+- [GraphQL EZ](https://www.graphql-ez.com/): Build GraphQL servers with ease by leveraging plugins based on Envelop
 - [`Fastify`](https://github.com/fastify/fastify/) An efficient server for Node.js
 - [GraphQL Helix](https://github.com/contrawork/graphql-helix/): A highly evolved GraphQL HTTP Server with zero dependencies except for graphql-js itself
 - [`graphql-js`](https://github.com/graphql/graphql-js) The JavaScript reference implementation for GraphQL
@@ -37,6 +38,13 @@ In this tutorial, we'll learn how to build a GraphQL server entirely from scratc
   explore the functionality of a GraphQL API by sending queries and mutations to it. It's somewhat similar to
   [Postman](https://www.getpostman.com/) which offers comparable functionality for REST APIs.
 
+### Pre-requisites
+
+We assume that you have a basic knowledge of Node.js, Typescript and GraphQL. If you don't you can learn about these here:
+- [Node.js](https://nodejs.dev/learn)
+- [Typescript](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html)
+- [GraphQL Basics](https://graphql.org/learn/)
+
 ### What to expect
 
 The goal of this tutorial is to build an API for a [Hacker News](https://news.ycombinator.com/) clone. Here is a quick
@@ -44,8 +52,7 @@ rundown of what to expect.
 
 We'll start by learning the basics of how a GraphQL server works, simply by defining a
 [_GraphQL schema_](https://graphql.org/learn/schema/) for the server and writing
-corresponding _resolver functions_. In the beginning, these resolvers will only work with data that's stored in-memory -
-so nothing will persist beyond the runtime of the server.
+corresponding _resolver functions_.
 
 Nobody wants a server that's not able to store and persist data, right? Not to worry! Next, we're going to add a
 [SQLite](http://sqlite.org/) database to the project which will be managed with [Prisma](https://www.prisma.io/).
