@@ -3,6 +3,15 @@ title: Getting Started
 pageTitle: 'Building a GraphQL Server with Node.js, Fastify, Typescript, GraphQL EZ, GraphQL Helix, Envelop & Prisma'
 description:
   'Learn how to build a GraphQL server with Fastify, graphql-helix, Node.js, Typescript, GraphQL EZ, Envelop & Prisma'
+question: What does GraphQL EZ use under the hood for enabling plugins?
+answers:
+  [
+    'Prisma',
+    'Envelop',
+    'Fastify',
+    'Postman'
+  ]
+correctAnswer: 1
 ---
 
 In this section, we will look at an overview about the project, create the relevant folders and learn about the packages we would be using to build the GraphQL server.
@@ -15,7 +24,7 @@ In this tutorial, we will use:
 
 - [GraphQL EZ Fastify Integration](https://www.graphql-ez.com/docs/integrations/fastify) for building our server on top of Node.js and make sure its performant at the same time as well.
 - [GraphiQL Plugin](https://www.graphql-ez.com/plugins/graphiql) for exploring the GraphQL schema using the IDE
-- [GraphQL Modules Plugin](https://www.graphql-ez.com/plugins/graphql-modules) for modularizing the GraphQL Schema
+- [GraphQL Schema Plugin](https://www.graphql-ez.com/plugins/schema) for working with the GraphQL Schema
 - [GraphQL Scalars Plugin](https://www.graphql-ez.com/plugins/graphql-scalars) for leveraging custom scalars like DateTime which are not part of the GraphQL Specification
 - [GraphQL Websockets Plugin](https://www.graphql-ez.com/plugins/websockets) for enabling realtime communication and updates using GraphQL Subscriptions
 
@@ -63,6 +72,16 @@ touch tsconfig.json .gitignore README.md src/index.ts
 
 </Instruction>
 
+This is how the project structure looks like:
+
+![project directory structure](https://imgur.com/NM2BdEV.jpg)
+
+Now, this is how the src directory looks like:
+
+![src directory structure](https://i.imgur.com/Tm5djKV.jpg)
+
+You can have a look at the [Github Repository](https://github.com/tvvignesh/graphql-ez-example/tree/hackernews-ts) for reference on how the completed project looks like.
+
 Now that you have created the folders and files as necessary, the next step is to configure typescript using the tsconfig file. To know more about what each of the configuration does, we advise that you look into the [TSConfig Reference](https://www.typescriptlang.org/tsconfig) which provides more details about the same.
 
 <Instruction>
@@ -101,7 +120,7 @@ The next step you will want to do is to install all the packages/dependencies yo
 In your terminal, cd to the root of your project and run these commands - these packages will be added to your main dependencies:
 
 ```bash(path=".../hackernews-ts/")
-yarn add fastify graphql @graphql-ez/fastify @graphql-ez/plugin-graphiql @graphql-ez/plugin-modules @graphql-ez/plugin-scalars @graphql-ez/plugin-websockets @prisma/client bcryptjs fastify graphql graphql-ez graphql-subscriptions jsonwebtoken
+yarn add fastify graphql @graphql-ez/fastify @graphql-ez/plugin-graphiql @graphql-ez/plugin-scalars @graphql-ez/plugin-websockets @graphql-ez/plugin-schema @prisma/client bcryptjs fastify graphql graphql-ez graphql-subscriptions jsonwebtoken
 ```
 
 Now, run these commands in your terminal to install the devdependencies you will need for this project
@@ -130,7 +149,7 @@ To make things easy for you to work with, we will add some scripts to your `pack
 }
 ```
 
-Now this will allow you transpile your typescript code to javascript and start the server with just 2 commands `yarn start` and `yarn dev`
+Now this will allow you transpile your typescript code to javascript and start the server with just 2 commands `yarn start` for production without live reload and `yarn dev` during development with live reload using `nodemon`
 
 </Instruction>
 

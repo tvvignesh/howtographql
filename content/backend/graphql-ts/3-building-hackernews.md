@@ -48,79 +48,74 @@ This is how the modules will look like:
 `feed.ts` - We declare queries to get the list of posts, links, count, etc.
 
 ```ts(path="../hackernews-ts/src/modules/feed.ts")
-import { gql, registerModule } from '../app';
+import { gql } from '@graphql-ez/plugin-schema';
 
-registerModule(
-  gql`
-    type Feed {
-      id: ID!
-      links: [Link!]!
-      count: Int!
-    }
+export const typeDefs = gql`
+  type Feed {
+    id: ID!
+    links: [Link!]!
+    count: Int!
+  }
 
-    enum Sort {
-      asc
-      desc
-    }
+  enum Sort {
+    asc
+    desc
+  }
 
-    input LinkOrderByInput {
-      description: Sort
-      url: Sort
-      createdAt: Sort
-    }
+  input LinkOrderByInput {
+    description: Sort
+    url: Sort
+    createdAt: Sort
+  }
 
-    extend type Query {
-      feed(
-        filter: String
-        skip: Int
-        take: Int
-        orderBy: LinkOrderByInput
-      ): Feed!
-    }
-  `,
-  {
-    resolvers: {
-      Query: {
-        async feed (parent, args, context, info) {
-          const where = args.filter
-            ? {
-                OR: [
-                  { description: { contains: args.filter } },
-                  { url: { contains: args.filter } }
-                ]
-              }
-            : {};
-        
-          const links = await context.prisma.link.findMany({
-            where,
-            skip: args.skip,
-            take: args.take,
-            orderBy: args.orderBy
-          });
-        
-          const count = await context.prisma.link.count({ where });
-        
-          return {
-            id: 'main-feed',
-            links,
-            count
-          };
-        },
+  extend type Query {
+    feed(
+      filter: String
+      skip: Int
+      take: Int
+      orderBy: LinkOrderByInput
+    ): Feed!
+  }`;
+
+export const resolvers = {
+    Query: {
+      async feed (parent, args, context, info) {
+        const where = args.filter
+          ? {
+              OR: [
+                { description: { contains: args.filter } },
+                { url: { contains: args.filter } }
+              ]
+            }
+          : {};
+      
+        const links = await context.prisma.link.findMany({
+          where,
+          skip: args.skip,
+          take: args.take,
+          orderBy: args.orderBy
+        });
+      
+        const count = await context.prisma.link.count({ where });
+      
+        return {
+          id: 'main-feed',
+          links,
+          count
+        };
       },
     },
-  }
-);
+};
 ```
 
 `src/modules/post.ts` - We will manage new posts in this module and also handle subscriptions for posts that have been made. Note that we publish using `context.pubsub.publish` every time a post is made which is inturn subscribed to using `context.pubsub.asyncIterator`
 
 ```ts(path="../hackernews-ts/src/modules/post.ts")
-import { gql, registerModule } from '../app';
-
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-registerModule(
-  gql`
+import { gql } from '@graphql-ez/plugin-schema';
+
+export const typeDefs = gql`
     type Link {
       id: ID!
       description: String!
@@ -137,76 +132,73 @@ registerModule(
     extend type Mutation {
       post(url: String!, description: String!): Link!
     }
-  `,
-  {
-    resolvers: {
-      Mutation: {
-        async post(parent, args, context, info) {
-          const { userId } = context;
-        
-          const newLink = await context.prisma.link.create({
-            data: {
-              url: args.url,
-              description: args.description,
-              postedBy: { connect: { id: userId } }
-            }
-          });
+`;
 
-          console.log('Publishing new link:::', newLink);
-
-          await context.pubsub.publish('NEW_LINK', {
-            newLink: newLink
-          });
-        
-          return newLink;
+export const resolvers = {
+  Mutation: {
+    async post(parent, args, context, info) {
+      const { userId } = context;
+    
+      const newLink = await context.prisma.link.create({
+        data: {
+          url: args.url,
+          description: args.description,
+          postedBy: { connect: { id: userId } }
         }
-        
+      });
+
+      console.log('Publishing new link:::', newLink);
+
+      await context.pubsub.publish('NEW_LINK', {
+        newLink: newLink
+      });
+    
+      return newLink;
+    }
+    
+  },
+  Subscription: {
+    hello: {
+      async *subscribe(_root, _args, _ctx) {
+        for (let i = 1; i <= 5; ++i) {
+          await sleep(500);
+
+          yield {
+            hello: 'Hello World ' + i,
+          };
+        }
+        yield {
+          hello: 'Done!',
+        };
       },
-      Subscription: {
-        hello: {
-          async *subscribe(_root, _args, _ctx) {
-            for (let i = 1; i <= 5; ++i) {
-              await sleep(500);
-
-              yield {
-                hello: 'Hello World ' + i,
-              };
-            }
-            yield {
-              hello: 'Done!',
-            };
-          },
-        },
-        newLink: {
-          async subscribe(_root, _args, context) {
-            // console.log('Val::', await context.pubsub.asyncIterator("NEW_LINK").next());
-            const newVal = await (await context.pubsub.asyncIterator("NEW_LINK").next()).value;
-            console.log('newVal::', newVal);
-            return newVal;
-          },
-        }
-        // newLink: {
-        //   subscribe: (parent, args, context, info) => {
-        //     // console.log('iterator::', context.pubsub.asyncIterator("NEW_LINK"));
-        //     return context.pubsub.asyncIterator("NEW_LINK");
-        //   }
-        // }
-      }
     },
+    newLink: {
+      async subscribe(_root, _args, context) {
+        // console.log('Val::', await context.pubsub.asyncIterator("NEW_LINK").next());
+        const newVal = await (await context.pubsub.asyncIterator("NEW_LINK").next()).value;
+        console.log('newVal::', newVal);
+        return newVal;
+      },
+    }
+    // newLink: {
+    //   subscribe: (parent, args, context, info) => {
+    //     // console.log('iterator::', context.pubsub.asyncIterator("NEW_LINK"));
+    //     return context.pubsub.asyncIterator("NEW_LINK");
+    //   }
+    // }
   }
-);
+};
 ```
 
 `src/modules/user.ts` - We will manage new user signups and logins in this file. We are using `jsonwebtoken` to help us with the authentication and `bcrypt` to help us hash and validate passwords to be stored in the database. You can read more about jsonwebtoken [here](https://www.npmjs.com/package/jsonwebtoken) and bcrypt [here](https://www.npmjs.com/package/bcrypt)
 
 ```ts(path="../hackernews-ts/src/modules/user.ts")
+import { gql } from '@graphql-ez/plugin-schema';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { gql, registerModule } from '../app';
-import { APP_SECRET } from '../utils/utils.js';
+import { APP_SECRET } from '../utils.js';
 
-registerModule(
-  gql`
+export const typeDefs = gql`
     type Query {
       info: String!
     }
@@ -231,78 +223,73 @@ registerModule(
       email: String!
       links: [Link!]!
     }
+`;
 
-
-  `,
-  {
-    resolvers: {
-      Query: {
-        info(_root, _args, _ctx) {
-          return 'hello world';
-        }
-      },
-      Mutation: {
-        async signup(parent, args, context, info) {
-          const password = await bcrypt.hash(args.password, 10);
-          const user = await context.prisma.user.create({
-            data: { ...args, password }
-          });
-        
-          const token = jwt.sign({ userId: user.id }, APP_SECRET);
-        
-          return {
-            token,
-            user
-          };
-        },
-        async login(parent, args, context, info) {
-          const user = await context.prisma.user.findUnique({
-            where: { email: args.email }
-          });
-
-          if (!user) {
-            throw new Error('No such user found');
-          }
-        
-          const valid = await bcrypt.compare(
-            args.password,
-            user.password
-          );
-          if (!valid) {
-            throw new Error('Invalid password');
-          }
-        
-          const token = jwt.sign({ userId: user.id }, APP_SECRET);
-        
-          return {
-            token,
-            user
-          };
-        }
-      },
-      User: {
-        async links(parent, args, context) {
-          return context.prisma.user
-            .findUnique({ where: { id: parent.id } })
-            .links();
-        }
-      }
+export const resolvers = {
+  Query: {
+    info(_root, _args, _ctx) {
+      return 'hello world';
+    }
+  },
+  Mutation: {
+    async signup(parent, args, context, info) {
+      const password = await bcrypt.hash(args.password, 10);
+      const user = await context.prisma.user.create({
+        data: { ...args, password }
+      });
+    
+      const token = jwt.sign({ userId: user.id }, APP_SECRET);
+    
+      return {
+        token,
+        user
+      };
     },
+    async login(parent, args, context, info) {
+      const user = await context.prisma.user.findUnique({
+        where: { email: args.email }
+      });
+
+      if (!user) {
+        throw new Error('No such user found');
+      }
+    
+      const valid = await bcrypt.compare(
+        args.password,
+        user.password
+      );
+      if (!valid) {
+        throw new Error('Invalid password');
+      }
+    
+      const token = jwt.sign({ userId: user.id }, APP_SECRET);
+    
+      return {
+        token,
+        user
+      };
+    }
+  },
+  User: {
+    async links(parent, args, context) {
+      return context.prisma.user
+        .findUnique({ where: { id: parent.id } })
+        .links();
+    }
   }
-);
+};
 ```
 
 `src/modules/vote.ts` - Here we will manage upvotes and downvotes of the posts that have been made and also subscribe to the votes similar to what we did for posts
 
 ```ts(path="../hackernews-ts/src/modules/vote.ts")
-import { gql, registerModule } from '../app';
-
 function newVoteSubscribe(parent, args, context, info) {
   return context.pubsub.asyncIterator("NEW_VOTE")
 }
 
-registerModule(
-  gql`
+import { gql } from '@graphql-ez/plugin-schema';
+
+export const typeDefs = gql`
     type Vote {
       id: ID!
       link: Link!
@@ -312,67 +299,67 @@ registerModule(
     extend type Subscription {
       newVote: Vote
     }
-    
+
     extend type Link {
       votes: [Vote!]!
     }
-    
+
     extend type Mutation {
       vote(linkId: ID!): Vote
     }
-  `,
-  {
-    resolvers: {
-      Mutation: {
-        async vote(parent, args, context, info) {
-          const { userId } = context;
-          const vote = await context.prisma.vote.findUnique({
-            where: {
-              linkId_userId: {
-                linkId: Number(args.linkId),
-                userId: userId
-              }
-            }
-          });
-        
-          if (Boolean(vote)) {
-            throw new Error(
-              `Already voted for link: ${args.linkId}`
-            );
+`;
+
+export const resolvers = {
+  Mutation: {
+    async vote(parent, args, context, info) {
+      const { userId } = context;
+      const vote = await context.prisma.vote.findUnique({
+        where: {
+          linkId_userId: {
+            linkId: Number(args.linkId),
+            userId: userId
           }
-        
-          const newVote = context.prisma.vote.create({
-            data: {
-              user: { connect: { id: userId } },
-              link: { connect: { id: Number(args.linkId) } }
-            }
-          });
-          context.pubsub.publish('NEW_VOTE', newVote);
-        
-          return newVote;
         }
-      },
-      Subscription: {
-        newVote: {
-          subscribe: newVoteSubscribe,
-          resolve: payload => {
-            return payload
-          },
-        }
-      },
-      Vote: {
-        async link(parent, args, context) {
-          return context.prisma.vote
-            .findUnique({ where: { id: parent.id } })
-            .link();
-        },
-        async user(parent, args, context) {
-          return context.prisma.vote
-            .findUnique({ where: { id: parent.id } })
-            .user();
-        }
+      });
+    
+      if (Boolean(vote)) {
+        throw new Error(
+          `Already voted for link: ${args.linkId}`
+        );
       }
+    
+      const newVote = context.prisma.vote.create({
+        data: {
+          user: { connect: { id: userId } },
+          link: { connect: { id: Number(args.linkId) } }
+        }
+      });
+      context.pubsub.publish('NEW_VOTE', newVote);
+    
+      return newVote;
+    }
+  },
+  Subscription: {
+    newVote: {
+      subscribe: newVoteSubscribe,
+      resolve: payload => {
+        return payload
+      },
+    }
+  },
+  Vote: {
+    async link(parent, args, context) {
+      return context.prisma.vote
+        .findUnique({ where: { id: parent.id } })
+        .link();
     },
+    async user(parent, args, context) {
+      return context.prisma.vote
+        .findUnique({ where: { id: parent.id } })
+        .user();
+    }
   }
-);
+};
 ```
+
+Now that we have the schema and resolvers ready for the different portions of the application, the next step to getting our app to work is to build the context. Let's have a look at it in the next step.

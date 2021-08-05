@@ -55,7 +55,7 @@ We'll start by learning the basics of how a GraphQL server works, simply by defi
 corresponding _resolver functions_.
 
 Nobody wants a server that's not able to store and persist data, right? Not to worry! Next, we're going to add a
-[SQLite](http://sqlite.org/) database to the project which will be managed with [Prisma](https://www.prisma.io/).
+[SQLite](http://sqlite.org/) database to the project which will be managed with [Prisma](https://www.prisma.io/) as the ORM.
 
 Once you have the database connected, you are going to add more advanced features to the API.
 

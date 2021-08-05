@@ -13,7 +13,7 @@ The first step of the process is to get your GraphQL server setup. `index.ts` is
 
 ```ts(path="../hackernews-ts/src/index.ts")
 import Fastify from 'fastify';
-import { buildApp } from './app';
+import { ezApp } from './app';
 
 // Create a fastify instance in the server
 
@@ -23,13 +23,9 @@ const app = Fastify({
 
 // Register the app and the relevant modules within - Our modules directory has an index.ts file which inturn loads all the relevant modules we need for the app
 
-app.register(
-    buildApp({
-      async prepare() {
-        await import('./modules');
-      }
-    }).fastifyPlugin
-);
+const { fastifyPlugin } = ezApp.buildApp({});
+
+app.register(fastifyPlugin);
 
 // Listen for the ready event and exit if error occured
 
@@ -48,7 +44,7 @@ app.listen(process.env.PORT || 3000);
 This is what we did above:
 
 - Register an instance of fastify which is what we are using for building the Node.js / GraphQL server with the logger turned on
-- Register the app and loaded the modules which make up the app
+- Register the app by registering the plugin which make up the app
 - Listen for error events and exit the server after logging on failures
 - Start listening to request on port 3000 by default
 
@@ -56,10 +52,11 @@ This is what we did above:
 Now, the next step is to setup `src/app.ts` which takes care of creating our app and registering the GraphQL EZ plugins we need to work on the project
 
 ```ts(path="../hackernews-ts/src/app.ts")
-import { BuildContextArgs, CreateApp, gql, InferContext } from '@graphql-ez/fastify';
+import { BuildContextArgs, CreateApp, InferContext } from '@graphql-ez/fastify';
 import { ezGraphiQLIDE } from '@graphql-ez/plugin-graphiql';
-import { ezGraphQLModules } from '@graphql-ez/plugin-modules';
+import { ezSchema } from '@graphql-ez/plugin-schema';
 import { ezScalars } from '@graphql-ez/plugin-scalars';
+import { schema } from './modules';
 
 // Context Factory to build the context object in GraphQL Server
 
@@ -78,20 +75,21 @@ declare module 'graphql-ez' {
 
 // Create GraphQL APP by bootstrapping it with the plugins we need
 
-export const { registerModule, buildApp } = CreateApp({
+export const ezApp = CreateApp({
     buildContext,
     ez: {
       plugins: [
+        ezSchema({
+          schema: schema
+        }),
         ezGraphiQLIDE(),
-        ezGraphQLModules(),
         ezScalars({
             DateTime: 1,
-        })
+        }),
+        ezWebSockets('adaptive')
       ],
     }
 });
-
-export { gql };
 
 
 ```
@@ -100,14 +98,14 @@ And this is what we did above:
 
 - We build a context factory object. The context factory object would be accessible in all the resolvers throughout our GraphQL Server. It is typically used for things like initializing user context, add database connections, etc. which would be inturn used in all resolvers.
 - We declare the `graphql-ez` module to help us with Typescript Augmentation
-- We create the app by bootstrapping it with all the plugins we need for our app to work. In this case, we are using GraphiQL, GraphQL Modules and GraphQL Scalars to get us started. These plugins were already installed by us during our first step in the project
+- We create the app by bootstrapping it with all the plugins we need for our app to work. In this case, we are using GraphiQL, GraphQL Schema Plugin and GraphQL Scalars to get us started. These plugins were already installed by us during our first step in the project
 
 
 Let us quickly look at what the plugins do.
 
 - `@graphql-ez/plugin-graphiql` helps us to initialize the GraphiQL explorer and allows us to browse through and operate on the GraphQL schema, run operations, browse through history of operations, etc. You can read more about GraphiQL [here](https://github.com/graphql/graphiql)
-- `@graphql-ez/plugin-modules` helps us to modularize our GraphQL server so that we can have it organized the way we want within the server so that it is easy to manage, understand and maintain. You can read more about GraphQL modules [here](https://graphql-modules.com)
 - `@graphql-ez/plugin-scalars` helps us to declare and use custom GraphQL scalars which are not part of the GraphQL Spec by default. For instance, the GraphQL spec does not offer us a way to declare `DateTime` fields. So, using a package like this enables us to extend GraphQL to add the types we need. You can read more about GraphQL Scalars [here](graphql-scalars.dev)
+- `@graphql-ez/plugin-schema` helps us build the schema for our GraphQL server. It is an abstraction on top of the various packages offered by [GraphQL Tools](https://graphql-tools.com/) and also comes with typings as required for the resolvers we build.
 
 
 We can add more plugins in the future to help us with realtime subscriptions, file uploads, etc. We will look at one of the cases as we go through the tutorial.
@@ -124,24 +122,20 @@ In our case, it is `src/modules/first.ts` , `src/modules/second.ts` and we will 
 So, let's start with the first file `src/modules/first.ts`
 
 ```ts(path="../hackernews-ts/src/modules/first.ts")
-import { gql, registerModule } from '../app';
+import { gql } from '@graphql-ez/plugin-schema';
 
-registerModule(
-  gql`
-    type Query {
+export const typeDefs = gql`
+  type Query {
       hello: String!
-    }
-  `,
-  {
-    resolvers: {
-      Query: {
+    }`;
+
+export const resolvers = {
+    Query: {
         hello(_root, _args, _ctx) {
-          return 'hello';
+            return 'hello';
         },
-      }
-    },
-  }
-);
+    }
+};
 ```
 
 The above code is simple as it should be. All we are doing is that we register a GraphQL module and to it, we pass the GraphQL Schema and the resolvers which is where we would have all the logic to get the values for the relevant types.
@@ -158,34 +152,40 @@ Once we do all of this, we have the first module of the application.
 Now, similarly, we work on another file `src/modules/second.ts` which will act as the second module in the application which works the same way as above but has a different schema and different resolver to resolve the values.
 
 ```ts(path="../hackernews-ts/src/modules/second.ts")
-import { gql, registerModule } from '../app';
+import { gql } from '@graphql-ez/plugin-schema';
 
-registerModule(
-  gql`
-    extend type Query {
+export const typeDefs = gql`
+  extend type Query {
       hello2: String!
-    }
-  `,
-  {
-    resolvers: {
-      Query: {
+    }`;
+
+export const resolvers = {
+    Query: {
         hello2() {
-          return 'asd';
+            return 'asd';
         },
-      },
     },
-  }
-);
+};
 ```
 
 Once we get this done, the next step is to actually import this in `src/modules/index.ts` like this so that we can easily import it when registering the modules in our application
 
 
 ```ts(path="../hackernews-ts/src/modules/index.ts")
-import './first';
-import './second';
+import { EZSchema } from '@graphql-ez/plugin-schema';
+import * as first from './first';
+import * as second from './second';
+
+export const schema: EZSchema = {
+    typeDefs: [first.typeDefs, second.typeDefs],
+    resolvers: [first.resolvers, second.resolvers]
+};
 ```
 
-And that's it. We have our first GraphQL Server built using GraphQL EZ, Envelop, Fastify, GraphQL Modules, GraphiQL, Prisma which can further be extended to add all the features we need.
+And that's it. We have our first GraphQL Server built using GraphQL EZ, Envelop, Fastify, GraphiQL, Prisma which can further be extended to add all the features we need.
 
-Now, you can run it by using the command `yarn dev` in the CLI from the root of the project
+Now, you can run it by using the command `yarn dev` in the CLI from the root of the project and when you do, your GraphQL Server would start by default in `localhost:3000` port and you can visit the GraphiQL explorer by going to http://localhost:3000/graphiql
+
+Once you are in, you can try running the query which we setup as seen in the screenshot (and click the play button or `Ctrl/Cmd+Enter`) and you should see the result as you see in the screenshot. You can also explore the Docs using the Docs panel in the right and play around with the various autocomplete options you get when you press `Ctrl/Cmd+Space`
+
+![GraphiQL Playground](https://imgur.com/i4HWeux.jpg)
